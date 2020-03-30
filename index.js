@@ -47,40 +47,49 @@ async function checkSlots() {
       '--disable-dev-shm-usage'
     ]
   })
-  const page = await browser.newPage()
-  await page.setViewport({ width: 2000, height: 2000 })
-  await page.setCookie(shopCookie, popupCookie)
-  await page.goto('https://www.chronodrive.com/login')
-  await page.screenshot({ path: 'chronodrive.png' })
 
-
-  await page.click('#email_login')
-  page.keyboard.type(credentials.login)
-  await page.waitFor(1000)
-  await page.click('#pwd_login')
-  page.keyboard.type(credentials.password)
-  await page.waitFor(1000)
-  await page.click('#loginForm > button')
-  await page.waitFor(3000)
-  await page.goto('https://www.chronodrive.com/checkout')
-  // Do it again, it seems that chronodrive do something weird with redirection
-  await page.goto('https://www.chronodrive.com/checkout')
-  await page.waitFor(2000)
-
-  const slots = await page.evaluate(() => {
-    return document.querySelector('#slotFieldSetZone > div > div > div.left > div').innerText
-  })
-  if (!slots.includes('Pas de créneau horaire')) {
+  try {
+    const page = await browser.newPage()
+    await page.setViewport({ width: 2000, height: 2000 })
+    await page.setCookie(shopCookie, popupCookie)
+    await page.goto('https://www.chronodrive.com/login')
     await page.screenshot({ path: 'chronodrive.png' })
 
-    push.send(msgPushOver, function(err, result) {
-      if (err) throw err
-      console.log(result)
+
+    await page.click('#email_login')
+    page.keyboard.type(credentials.login)
+    await page.waitFor(1000)
+    await page.click('#pwd_login')
+    page.keyboard.type(credentials.password)
+    await page.waitFor(1000)
+    await page.click('#loginForm > button')
+    await page.waitFor(3000)
+    await page.goto('https://www.chronodrive.com/checkout')
+    // Do it again, it seems that chronodrive do something weird with redirection
+    await page.goto('https://www.chronodrive.com/checkout')
+    await page.waitFor(2000)
+
+    const slots = await page.evaluate(() => {
+      return document.querySelector('#slotFieldSetZone > div > div > div.left > div').innerText
     })
-  } else {
-    console.log('No slot available :(')
+    if (!slots.includes('Pas de créneau horaire')) {
+      await page.screenshot({ path: 'chronodrive.png' })
+
+      push.send(msgPushOver, function(err, result) {
+        if (err) throw err
+        console.log(result)
+      })
+    } else {
+      console.log('No slot available :(')
+    }
+
+  } catch(e) {
+    console.log(e)
+    process.exit()
   }
-  await browser.close()
+  finally {
+    browser.close()
+  }
 }
 
 checkSlots()
