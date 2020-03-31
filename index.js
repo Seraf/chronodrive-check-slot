@@ -64,6 +64,16 @@ async function checkSlots() {
     await page.waitFor(1000)
     await page.click('#loginForm > button')
     await page.waitFor(3000)
+    // check if cart is empty
+    const cart = await page.evaluate(() => {
+      return document.querySelector('#cartZone').innerText
+    })
+
+    if (cart.includes('0,00€')) {
+      console.log('Cart is empty !')
+      process.exit()
+    }
+
     await page.goto('https://www.chronodrive.com/checkout')
     // Do it again, it seems that chronodrive do something weird with redirection
     await page.goto('https://www.chronodrive.com/checkout')
@@ -73,6 +83,7 @@ async function checkSlots() {
       return document.querySelector('#slotFieldSetZone > div > div > div.left > div').innerText
     })
     if (!slots.includes('Pas de créneau horaire')) {
+      console.log('Sending message on pushover')
       await page.screenshot({ path: 'chronodrive.png' })
 
       push.send(msgPushOver, function(err, result) {
